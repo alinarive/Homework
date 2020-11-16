@@ -3,16 +3,16 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-struct node
+struct Node
 {
 	char *word;
-	struct node *next;
+	struct Node *next;
 };
 
-void put_out(struct node *list)
+void put_out(struct Node *list)
 {
 	while (list){
-		struct node *tmp = list;	
+		struct Node *tmp = list;	
         	printf("%s\n", tmp->word);
         	free(tmp->word);
 		free(tmp);
@@ -20,10 +20,10 @@ void put_out(struct node *list)
     	}
 }
 
-void delete(struct node *list)
+void delete(struct Node *list)
 {
 	while (list){
-		struct node *temporary = list;
+		struct Node *temporary = list;
 		free(temporary->word);
 		free(temporary);
 		list = list->next;
@@ -54,10 +54,10 @@ char* optimize(char *array, char *new_array, int length) /*build an array accura
 	return new_array;
 }
 
-struct node* new_word(char *array, struct node **first, struct node *last)
+struct Node* new_word(char *array, struct Node **first, struct Node *last)
 {
-	struct node *temporary;
-	temporary = malloc(sizeof(struct node));
+	struct Node *temporary;
+	temporary = malloc(sizeof(struct Node));
 	temporary->word = array;
 	temporary->next = NULL;
 	if (last){
@@ -78,7 +78,7 @@ void initial_values(int *count, int *size, char **array)
 	*array = malloc(8);
 }
 
-void print_error(int *flag, struct node **pointer)
+void print_error(int *flag, struct Node **pointer)
 {
 	char error[] = "Error, please enter correct number of quotes\n";
 	printf("%s", error);
@@ -86,7 +86,7 @@ void print_error(int *flag, struct node **pointer)
         delete(*pointer);
 }
 
-void array_from_list(struct node *pointer, int programs, char **comandline)
+void array_from_list(struct Node *pointer, int programs, char **comandline)
 {
 	int i;
 	for (i = 0;i < programs;i++){
@@ -98,17 +98,23 @@ void array_from_list(struct node *pointer, int programs, char **comandline)
 
 int compare_cd(char *word)
 {
-	int result;
-	if ((word[0] == 'c') && (word[1] == 'd') && (word[2] == 0))
-		result = 1;
-	else
-		result = 0;
+	int result = 0;
+	int word_length = 0;
+	while (word[word_length])
+		word_length++;
+	if (word_length == 2){
+		int if_first_element_c = (word[0] == 'c');
+		int if_second_element_d = (word[1] == 'd');
+		int if_word_is_cd = if_first_element_c && if_second_element_d;
+		if (if_word_is_cd)
+			result = 1;
+	}
 	return result;
 }
 
-void new_process(char **comandline, int programs)
+void process_new(char **comandline, int programs)
 {
-	int pid;
+	int process_id;
 	int directory;
 	char error[] = "Error, failed to open directory\n";
 	if (compare_cd(comandline[0])){
@@ -128,12 +134,12 @@ void new_process(char **comandline, int programs)
 		}
 	}
 	else {
-		pid = fork();
-		if (pid == -1){
+		process_id = fork();
+		if (process_id == -1){
 			printf("Error with fork\n");
 			exit(1);
 		}
-		if (pid == 0){
+		if (process_id == 0){
 			execvp(comandline[0], comandline);
 			printf("Error with execvp\n");
 			exit(1);
@@ -142,7 +148,7 @@ void new_process(char **comandline, int programs)
 	}
 }
 
-void met_enter(struct node *first, struct node *last, int *flag, int programs)
+void met_enter(struct Node *first, struct Node *last, int *flag, int programs)
 {
 	if (*flag)
 		print_error(flag, &first);
@@ -151,7 +157,7 @@ void met_enter(struct node *first, struct node *last, int *flag, int programs)
 			char **comandline;
 			comandline = malloc(sizeof(char *)*(programs + 1));
 			array_from_list(first, programs, comandline);
-			new_process(comandline, programs);
+			process_new(comandline, programs);
 			delete(first);
 			free(comandline);
 		}
@@ -166,7 +172,7 @@ void met_symbol(int *count, int *size, char **array, int symbol)
 	(*count)++;
 }
 
-void met_space(struct node **first, struct node **last, char *array, 
+void met_space(struct Node **first, struct Node **last, char *array, 
 		char **string, int count)
 {
 	*string = optimize(array, *string, count);
@@ -176,10 +182,11 @@ void met_space(struct node **first, struct node **last, char *array,
 void separate(FILE *file)
 {
 	int symbol;
-	struct node *first = NULL, *last = NULL;
+	struct Node *first = NULL, *last = NULL;
 	int count = 0;				/*counter for word's length*/
 	int size = 8;				/*start length*/
 	char *array, *str;			/*array of letters*/
+	/*flags for special symbols, not about current one*/
 	int quotes = 0, ampersand = 0, line = 0, arrow_right = 0, special_symbol = 0,
 		double_worked = 0;
 	int programs = 0;	
@@ -187,13 +194,32 @@ void separate(FILE *file)
 	char invitation[] = ">>>> : ";
 	printf("%s", invitation);
 	while ((symbol = getc(file)) != EOF){
-		if (((symbol != ' ' &&  symbol != '\t' && symbol != '\r' 
-			&& symbol != '&' && symbol != '|' && symbol != ';' 
-			&& symbol != '>' && symbol != '<' && symbol != '('
-			&& symbol != ')') || quotes) && symbol != '\n'){
-			if (symbol == '"')
+		/*to define if current is a special symbol*/
+		int symbol_space = (symbol == ' ');
+		int symbol_carriage = (symbol == '\r');
+		int symbol_tabulation = (symbol == '\t');
+		int symbol_ampersand = (symbol == '&');
+		int symbol_line = (symbol == '|');
+		int symbol_semicolon = (symbol == ';');
+		int symbol_arrow_right = (symbol == '>');
+		int symbol_arrow_left = (symbol == '<');
+		int symbol_bracket_left = (symbol == '(');
+		int symbol_bracket_right = (symbol == ')');
+		int symbol_enter = (symbol == '\n');
+		int symbol_quotes = (symbol == '"');
+		int not_special_symbol_or_quotes = ((!symbol_space 
+			&& !symbol_carriage && !symbol_tabulation 
+			&& !symbol_ampersand && !symbol_line 
+			&& !symbol_semicolon && !symbol_arrow_right 
+			&& !symbol_arrow_left && !symbol_bracket_left 
+			&& !symbol_bracket_right) || quotes);
+		int not_string_end = not_special_symbol_or_quotes && !symbol_enter;
+
+		if (not_string_end){
+			if (symbol_quotes)
 				quotes = !quotes;
 			else{
+				
 				if (ampersand || line || arrow_right){
 					met_space(&first, &last, array, &str, count);
 					initial_values(&count, &size, &array);
@@ -203,15 +229,19 @@ void separate(FILE *file)
 			}
 		}
 		else{
+			int double_special_symbol_possible = (ampersand
+				|| line || arrow_right);
+			int double_ampersand = (ampersand && symbol_ampersand);
+			int double_line = (line && symbol_line);
+			int double_arrow_right = (arrow_right && symbol_arrow_right);
                 	if (count && !ampersand && !line && !arrow_right){
 				met_space(&first, &last, array, &str, count);
 				programs++;
 			}
 			else
-			if (ampersand || line || arrow_right){
-				if ((ampersand && symbol == '&') || 
-				(line && symbol == '|')  
-				|| (arrow_right && symbol == '>'))
+			if (double_special_symbol_possible){
+				if (double_ampersand || double_line  
+				|| double_arrow_right)
 					met_symbol(&count, &size, &array, symbol);
 				met_space(&first, &last, array, &str, count);
 				programs++;
@@ -225,19 +255,24 @@ void separate(FILE *file)
 				programs = 0;
 			}
 			initial_values(&count, &size, &array);
-			if (!double_worked && ((!ampersand && symbol == '&')
-				|| (!line && symbol == '|') || symbol == ';' 
-				|| (!arrow_right && symbol == '>') || symbol == '<' 
-				|| symbol == '(' || symbol == ')')){
+			int first_ampersand = (!ampersand && symbol_ampersand);
+			int first_line = (!line && symbol_line);
+			int first_arrow_right = (!arrow_right && symbol_arrow_right);
+			int first_special_symbol = (!double_worked &&
+				(first_ampersand || first_line
+				|| first_arrow_right || symbol_semicolon
+				|| symbol_arrow_left || symbol_bracket_left
+				|| symbol_bracket_right));
+			if (first_special_symbol){				
 				special_symbol = 1;
-				if (symbol == '&')
+				if (symbol_ampersand)
 					ampersand = !ampersand;
-				if (symbol == '|')
+				if (symbol_line)
 					line = !line;
-				if (symbol == '>')
+				if (symbol_arrow_right)
 					arrow_right = !arrow_right;
 				met_symbol(&count, &size, &array, symbol);
-				if (!(ampersand || line || arrow_right)){
+				if (!double_special_symbol_possible){
 					met_space(&first, &last, array, &str, count);
 					programs++;
 					initial_values(&count, &size, &array);
