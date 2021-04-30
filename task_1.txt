@@ -1,0 +1,268 @@
+#include <iostream>
+
+using namespace std;
+class FloatMatrix {
+private:
+    float** matrix_first;
+    float** matrix_second;
+    float** matrix_result;
+    int rows_first;
+    int columns_first;
+    int rows_second;
+    int columns_second;
+    int rows_result;
+    int columns_result;
+    
+    void Size(int &rows, int &columns)
+    {
+        cout << "Введите размеры матрицы: \n";
+        cin >>rows;
+        cin >> columns;
+    }
+    
+    void Initialization(float** &matrix, int rows, int columns)
+    {
+        matrix = new float* [columns];
+        cout << "Введите матрицу: \n";
+        for (int i = 0; i < columns; i++)
+            matrix[i] = new float[rows];
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < columns; j++) {
+                cin >> matrix[i][j];
+            }
+    }
+    
+    void Initialization_Result(float** &matrix, int rows, int columns)
+    {
+        matrix = new float* [columns];
+        for (int i = 0; i < columns; i++)
+            matrix[i] = new float[rows];
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < columns; j++) {
+                matrix[i][j]=0;
+            }
+    }
+    
+public:
+    FloatMatrix()//конструктор
+    {
+        Size(rows_first, columns_first);
+        Initialization(matrix_first, rows_first, columns_first);
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) {
+                cout << matrix_first[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+    
+    ~FloatMatrix()
+    {
+        for (int i = 0; i < columns_first; i++)
+            delete[]matrix_first[i];
+        delete[] matrix_first;
+        for (int i = 0; i < columns_second; i++)
+            delete[]matrix_second[i];
+        delete[] matrix_second;
+        for (int i = 0; i < columns_result; i++)
+            delete[]matrix_result[i];
+        delete[] matrix_result;
+    }
+    
+    void PrintMatrix(float** matrix, int rows, int columns)
+    {
+        for (int i = 0; i < rows; i++){
+            for (int j = 0; j < columns; j++)
+                cout << matrix[i][j]<<" ";
+            cout << endl;
+        }
+    }
+    
+    void OrdinarySumMatrices(float** matrix_second, float** &matrix_result)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) 
+                matrix_result[i][j] = matrix_first[i][j] + matrix_second[i][j];
+        }
+    }
+    
+    void CombinedSumMatrices(float** matrix_second)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) 
+                matrix_first[i][j] = matrix_first[i][j] + matrix_second[i][j];
+        }
+    }
+    
+    void OrdinarySubstractionMatrices(float** matrix_second, float** &matrix_result)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) 
+                matrix_result[i][j] = matrix_first[i][j] - matrix_second[i][j];
+        }
+    }
+    
+    void CombinedSubstractionMatrices(float** matrix_second)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++)
+                matrix_first[i][j] = matrix_first[i][j] - matrix_second[i][j];
+        }
+    }
+    
+    void OrdinaryMultiplicationMatrixNumber(float** &matrix_result, float number)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++)
+                matrix_result[i][j] = matrix_first[i][j] * number;
+        }
+    }
+    
+    void CombinedMultiplicationMatrixNumber(float number)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) 
+                matrix_first[i][j] = matrix_first[i][j] * number;
+        }
+    }
+    
+    void OrdinaryDivisionMatrixNumber(float** &matrix_result, float number)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) 
+                matrix_result[i][j] = matrix_first[i][j] / number;
+        }
+    }
+    
+    void CombinedDivisionMatrixNumber(float number)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++)
+                matrix_first[i][j] = matrix_first[i][j] / number;
+        }
+    }
+    
+    void OrdinaryMultiplicationMatrices(float**& matrix_second, float** matrix_result)
+    {
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_second; j++) {
+                for(int k = 0; k < columns_first; k++)
+                    matrix_result[i][j] += matrix_first[i][k] * matrix_second[k][j];
+            }
+        }
+    }
+    
+    void GetMinor(float**& matrix, float**& new_matrix, int row, int column, int rows)
+    {
+        int shift_row = 0;
+        int shift_column = 0;
+        for (int i = 0; i < rows; i++){
+            if (i == row) shift_row = 1;
+            shift_column = 0;
+            for (int j = 0; j < rows - 1; j++){
+            	if (j == column) shift_column = 1;
+            	new_matrix[i][j] = matrix[i + shift_row][j + shift_column];
+            }
+        }
+    }
+    
+    int Determinant(float**& matrix, int rows)
+    {
+        int determinant = 0;
+        int degree = 1;
+        if (rows == 1) return matrix[0][0];
+        if (rows == 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+        rows = rows - 1;
+        Initialization_Result(matrix_result, rows_result, rows_result);
+        for (int i = 0; i < rows; i++) {
+            GetMinor(matrix, matrix_result, 0, i, rows);
+            determinant = determinant + (degree * matrix_first[0][i] * Determinant(matrix_result, rows - 1));
+            degree = - degree;
+        }
+        return determinant;
+    }
+    
+    void CountDeterminant()
+    {
+        if (rows_first == columns_first){
+            Determinant(matrix_first, rows_first);
+        }
+        else cout << "Задайте квадратную матрицу \n";
+    }
+    
+    void Compare(float**& matrix_second)
+    {
+        int equal = 1;
+        for (int i = 0; i < rows_first; i++) {
+            for (int j = 0; j < columns_first; j++) {
+                if (matrix_first[i][j] != matrix_second[i][j])
+                    equal = 0;
+            }
+        }
+        if (equal) cout << "Матрицы равны \n";
+        else cout << "Матрицы не равны \n";
+    }
+    
+    void Manager(int mode)
+    {
+        float number=0;
+        if ((mode == 1) || (mode == 2) || (mode == 3) || (mode == 4) || (mode == 11)){
+            rows_second = rows_first;
+            columns_second = columns_first;
+            Initialization(matrix_second, rows_second, columns_second);
+        }
+        if (mode == 9){
+            cout << "Введите  число строк второй матрицы: \n";
+            cin >>rows_second;
+            rows_second = columns_first;
+            rows_result = rows_first;
+            columns_result = columns_second;
+            Initialization(matrix_second, rows_second, columns_second);
+            Initialization_Result(matrix_result, rows_result, columns_result);
+        }
+        if ((mode == 1) || (mode == 2) || (mode == 5) || (mode == 6)){
+            rows_result = rows_first;
+            columns_result = columns_first;
+            Initialization_Result(matrix_result, rows_result, columns_result);
+        }
+        if ((mode == 6) || (mode == 8)){
+            cout << "Введите  число не равное нулю: \n";
+            cin >>number;
+        }
+        if ((mode == 5) || (mode == 7)){
+            cout << "Введите  число: \n";
+            cin >>number;
+        }
+        switch(mode) {
+            case(1):{OrdinarySumMatrices(matrix_second, matrix_result); break;}
+            case(2):{OrdinarySubstractionMatrices(matrix_second, matrix_result); break;}
+            case(3):{CombinedSumMatrices(matrix_second); break;}
+            case(4):{CombinedSubstractionMatrices(matrix_second); break;}
+            case(5):{OrdinaryMultiplicationMatrixNumber(matrix_result, number); break;}
+            case(6):{OrdinaryDivisionMatrixNumber(matrix_result, number); break;}
+            case(7):{CombinedMultiplicationMatrixNumber(number); break;}
+            case(8):{CombinedDivisionMatrixNumber(number); break;}
+            case(9):{OrdinaryMultiplicationMatrices(matrix_second, matrix_result); break;}
+            case(10):{CountDeterminant(); break;}
+            case(11):{Compare(matrix_second); break;}
+        }
+        if ((mode ==1) || (mode == 2) || (mode == 5) || (mode == 6) || (mode == 9)){
+            PrintMatrix(matrix_result, rows_result, columns_result);
+        }
+        if ((mode == 3) || (mode == 4) || (mode == 7) || (mode == 8)){
+            PrintMatrix(matrix_first, rows_first, columns_first);
+        }
+    }
+};
+
+int main()
+{   int number = 1;
+    setlocale(0, "russian");
+    FloatMatrix floatMatrix;
+    while (number) {
+        cout << "Введите  число (0-завершить, 1-'+', 2-'-', 3-'+=', 4-'-=', 5-'* на число', 6-'/ на число', 7-'*= на число', 8-'/= на число', 9-'*  на матрицу', 10-'определитель', 11-'проверить на равенство' ""): \n";
+        cin >> number;
+        floatMatrix.Manager(number);
+    }
+    return 0;
+}
